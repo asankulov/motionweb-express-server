@@ -4,6 +4,21 @@ const app = express();
 
 app.use(express.json());
 
+app.use((request, response, next) => {
+  console.log('Request: ', request.method, request.path);
+
+  next();
+});
+
+app.use((request, response, next) => {
+  const authPassword = request.headers['auth-password'];
+  if (authPassword === 'motionweb') {
+    return next();
+  }
+
+  throw new Error('Unauthorized!');
+});
+
 const posts = [
   {
     id: 1,
@@ -22,13 +37,14 @@ const posts = [
 app.get('/posts', (request, response) => {
   response.json(posts);
 });
+
 app.get('/posts/:id', (request, response) => {
   const id = Number(request.params.id);
   const post = posts.find((post) => post.id === id);
-  console.log(post);
 
   response.json(post);
 });
+
 app.post('/posts', (request, response) => {
   posts.push({
     ...request.body,
@@ -39,12 +55,49 @@ app.post('/posts', (request, response) => {
   response.sendStatus(200);
 });
 
+app.put('/posts/:id', (request, response) => {
+  const id = Number(request.params.id);
 
-// app.put();
-// app.patch();
-// app.delete();
+  const postIndex = posts.findIndex((post) => post.id === id);
+  if (postIndex === -1) {
+    return response.sendStatus(404);
+  }
 
+  posts[postIndex] = { ...request.body };
 
+  response.sendStatus(200);
+});
+
+app.patch('/posts/:id', (request, response) => {
+  const id = Number(request.params.id);
+
+  const postIndex = posts.findIndex((post) => post.id === id);
+  if (postIndex === -1) {
+    return response.sendStatus(404);
+  }
+
+  posts[postIndex] = { ...posts[postIndex], ...request.body };
+
+  response.sendStatus(200);
+});
+
+app.delete('/posts/:id', (request, response) => {
+  const id = Number(request.params.id);
+  const postIndex = posts.findIndex((post) => post.id === id);
+  if (postIndex === -1) {
+    return response.sendStatus(404);
+  }
+
+  posts.splice(postIndex, 1);
+
+  response.sendStatus(200);
+});
+
+app.use((error, request, response, next) => {
+  console.log('Error: ', error);
+
+  response.sendStatus(404);
+});
 app.listen(3000, () => {
   console.log('Http server started on port 3000');
 });

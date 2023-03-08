@@ -1,5 +1,7 @@
 const express = require('express');
 
+const { Post } = require('./db');
+
 const app = express();
 
 app.use(express.json());
@@ -19,51 +21,45 @@ app.use((request, response, next) => {
   throw new Error('Unauthorized!');
 });
 
-const posts = [
-  {
-    id: 1,
-    title: 'Node.js programming language',
-    text: 'Lorem ipsum dolor sit amet, consectetur adipiscing elit. Curabitur quis.',
-    createdDate: '2023-02-27',
-  },
-  {
-    id: 2,
-    title: '1st March events',
-    text: 'Phasellus vel sapien consequat nunc convallis aliquam.',
-    createdDate: '2023-03-01',
-  },
-];
+app.get('/posts', async (request, response) => {
+  const posts = await Post.find({}, { __v: 0 });
 
-app.get('/posts', (request, response) => {
   response.json(posts);
 });
 
-app.get('/posts/:id', (request, response) => {
-  const id = Number(request.params.id);
-  const post = posts.find((post) => post.id === id);
+app.get('/posts/:id', async (request, response) => {
+  const id = request.params.id;
+  const post = await Post.findById(id, { __v: 0 });
 
   response.json(post);
 });
 
-app.post('/posts', (request, response) => {
-  posts.push({
-    ...request.body,
-    id: 3,
-    createdDate: '2023-03-01',
-  });
+app.post('/posts', async (request, response) => {
+  try {
+    await Post.create({
+      title: request.body.title,
+      content: request.body.text,
+    });
 
-  response.sendStatus(200);
+    response.sendStatus(200);
+  } catch (error) {
+    response.status(400).json({
+      message: 'Fields are invalid!',
+    });
+  }
 });
 
-app.put('/posts/:id', (request, response) => {
-  const id = Number(request.params.id);
+app.put('/posts/:id', async (request, response) => {
+  const { id } = request.params;
 
-  const postIndex = posts.findIndex((post) => post.id === id);
-  if (postIndex === -1) {
-    return response.sendStatus(404);
-  }
+  await Post.updateOne(
+    { _id: id },
+    {
+      title: request.body.title,
+      text: request.body.text,
+    },
+  );
 
-  posts[postIndex] = { ...request.body };
 
   response.sendStatus(200);
 });
@@ -81,14 +77,9 @@ app.patch('/posts/:id', (request, response) => {
   response.sendStatus(200);
 });
 
-app.delete('/posts/:id', (request, response) => {
-  const id = Number(request.params.id);
-  const postIndex = posts.findIndex((post) => post.id === id);
-  if (postIndex === -1) {
-    return response.sendStatus(404);
-  }
-
-  posts.splice(postIndex, 1);
+app.delete('/posts/:id', async (request, response) => {
+  const { id } = request.params;
+  await Post.deleteOne({ _id: id });
 
   response.sendStatus(200);
 });
@@ -98,6 +89,7 @@ app.use((error, request, response, next) => {
 
   response.sendStatus(404);
 });
+
 app.listen(3000, () => {
   console.log('Http server started on port 3000');
 });

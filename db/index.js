@@ -1,6 +1,6 @@
 const mongoose = require('mongoose');
 
-mongoose.connect('mongodb://localhost:27017/motionweb_express_server').then(() => {
+mongoose.connect('mongodb://localhost:27017/motionweb').then(() => {
   console.log('connected');
 });
 
@@ -11,8 +11,22 @@ const Post = new mongoose.Schema({
   },
   text: {
     type: String,
+    required: true,
   },
-}, { timestamps: true, strict: 'throw' });
+  votes: {
+    type: Number,
+    required: false,
+    default: 0,
+  },
+  isPaid: {
+    type: Boolean,
+    required: false,
+    default: false,
+  },
+  hashtags: {
+    type: [String],
+  }
+}, { timestamps: true, strict: false });
 
 module.exports = {
   Post: mongoose.model('posts', Post),

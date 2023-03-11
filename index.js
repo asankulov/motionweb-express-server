@@ -7,7 +7,9 @@ const app = express();
 app.use(express.json());
 
 app.use((request, response, next) => {
-  console.log('Request: ', request.method, request.path);
+  response.on('finish', () => {
+    console.log('Request: ', request.method, request.url, '=' + response.statusCode);
+  });
 
   next();
 });
@@ -22,7 +24,22 @@ app.use((request, response, next) => {
 });
 
 app.get('/posts', async (request, response) => {
-  const posts = await Post.find({}, { __v: 0 });
+  console.log(request.query);
+  let { minVotes, isPaid, hashtags } = request.query;
+
+  isPaid = isPaid === 'false' ? false : Boolean(isPaid);
+
+  const posts = await Post.find(
+    {
+      $and: [
+        // { votes: { $gte: Number(minVotes) } },
+        { isPaid },
+        { hashtags: { $all: hashtags } },
+      ],
+
+    },
+    { __v: 0 },
+  );
 
   response.json(posts);
 });
@@ -38,7 +55,9 @@ app.post('/posts', async (request, response) => {
   try {
     await Post.create({
       title: request.body.title,
-      content: request.body.text,
+      text: request.body.text,
+      isPaid: Boolean(request.body.isPaid),
+      hashtags: request.body.hashtags,
     });
 
     response.sendStatus(200);
@@ -64,15 +83,15 @@ app.put('/posts/:id', async (request, response) => {
   response.sendStatus(200);
 });
 
-app.patch('/posts/:id', (request, response) => {
-  const id = Number(request.params.id);
-
-  const postIndex = posts.findIndex((post) => post.id === id);
-  if (postIndex === -1) {
-    return response.sendStatus(404);
-  }
-
-  posts[postIndex] = { ...posts[postIndex], ...request.body };
+app.patch('/posts/:id', async (request, response) => {
+  await Post.updateOne(
+    { _id: request.params.id },
+    {
+      $set: {
+        ...request.body,
+      },
+    },
+  )
 
   response.sendStatus(200);
 });

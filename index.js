@@ -3,16 +3,16 @@ const express = require('express');
 const { Post } = require('./db');
 
 const app = express();
-
-app.use(express.json());
-
 app.use((request, response, next) => {
+  // console.log('Request: ', request.method, request.url, '=', response.statusCode);
   response.on('finish', () => {
-    console.log('Request: ', request.method, request.url, '=' + response.statusCode);
+    console.log('Request: ', request.method, request.url, '=', response.statusCode);
   });
 
   next();
 });
+
+app.use(express.json());
 
 app.use((request, response, next) => {
   const authPassword = request.headers['auth-password'];
@@ -23,23 +23,37 @@ app.use((request, response, next) => {
   throw new Error('Unauthorized!');
 });
 
+// example json body parser middleware
+// app.use((request, response, next) => {
+//   if (request.headers['content-type'] === 'application/json') {
+//     request.body = JSON.parse(request.rawBody);
+//   }
+//
+//   throw new Error('Unauthorized!');
+// });
+
 app.get('/posts', async (request, response) => {
   console.log(request.query);
   let { minVotes, isPaid, hashtags } = request.query;
 
   isPaid = isPaid === 'false' ? false : Boolean(isPaid);
 
-  const posts = await Post.find(
-    {
-      $and: [
-        // { votes: { $gte: Number(minVotes) } },
-        { isPaid },
-        { hashtags: { $all: hashtags } },
-      ],
-
-    },
-    { __v: 0 },
-  );
+  const posts = await Post
+    .find(
+      {
+        /*$and: [
+          // { votes: { $gte: Number(minVotes) } },
+          { isPaid },
+          { hashtags: { $all: hashtags } },
+        ],*/
+      },
+      { __v: 0 },
+    )
+    .limit(50)
+    .skip(0)
+    .sort({ votes: -1, createdAt: -1 });
+  // 1, 2, 3, 4, 5 = 1 A-Z a-z
+  // 5, 4, 3, 2, 1 = -1 Z-A z-a
 
   response.json(posts);
 });

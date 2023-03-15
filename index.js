@@ -3,6 +3,9 @@ const express = require('express');
 const { Post } = require('./db');
 
 const app = express();
+
+app.set('view engine', 'pug');
+
 app.use((request, response, next) => {
   // console.log('Request: ', request.method, request.url, '=', response.statusCode);
   response.on('finish', () => {
@@ -14,14 +17,14 @@ app.use((request, response, next) => {
 
 app.use(express.json());
 
-app.use((request, response, next) => {
-  const authPassword = request.headers['auth-password'];
-  if (authPassword === 'motionweb') {
-    return next();
-  }
-
-  throw new Error('Unauthorized!');
-});
+// app.use((request, response, next) => {
+//   const authPassword = request.headers['auth-password'];
+//   if (authPassword === 'motionweb') {
+//     return next();
+//   }
+//
+//   throw new Error('Unauthorized!');
+// });
 
 // example json body parser middleware
 // app.use((request, response, next) => {
@@ -33,10 +36,9 @@ app.use((request, response, next) => {
 // });
 
 app.get('/posts', async (request, response) => {
-  console.log(request.query);
-  let { minVotes, isPaid, hashtags } = request.query;
+  // let { minVotes, isPaid, hashtags } = request.query;
 
-  isPaid = isPaid === 'false' ? false : Boolean(isPaid);
+  // isPaid = isPaid === 'false' ? false : Boolean(isPaid);
 
   const posts = await Post
     .find(
@@ -54,15 +56,28 @@ app.get('/posts', async (request, response) => {
     .sort({ votes: -1, createdAt: -1 });
   // 1, 2, 3, 4, 5 = 1 A-Z a-z
   // 5, 4, 3, 2, 1 = -1 Z-A z-a
+  response.render('index', {
+    title: 'Posts page',
+    posts: posts.map((post) => ({ ...post.toJSON(), link: '/posts/' + post._id })),
+  });
 
-  response.json(posts);
+  // response.json(posts);
 });
 
 app.get('/posts/:id', async (request, response) => {
   const id = request.params.id;
   const post = await Post.findById(id, { __v: 0 });
 
-  response.json(post);
+  response.render(
+    'post',
+    {
+      title: post.title,
+      text: post.text,
+      hashtags: post.hashtags,
+    },
+  );
+
+  // response.json(post);
 });
 
 app.post('/posts', async (request, response) => {
@@ -117,11 +132,18 @@ app.delete('/posts/:id', async (request, response) => {
   response.sendStatus(200);
 });
 
-app.use((error, request, response, next) => {
-  console.log('Error: ', error);
-
-  response.sendStatus(404);
+app.get('/', (request, response) => {
+  response.render(
+    'index',
+    { title: 'Pug template', message: 'Hello, Pug!' }
+  );
 });
+
+// app.use((error, request, response, next) => {
+//   console.log('Error: ', error);
+//
+//   response.sendStatus(404);
+// });
 
 app.listen(3000, () => {
   console.log('Http server started on port 3000');

@@ -1,4 +1,6 @@
 const express = require('express');
+const passport = require('./auth/auth');
+const authRoutes = require('./auth/routes');
 
 const { Post } = require('./db');
 
@@ -16,6 +18,8 @@ app.use((request, response, next) => {
 });
 
 app.use(express.json());
+
+app.use(authRoutes);
 
 // app.use((request, response, next) => {
 //   const authPassword = request.headers['auth-password'];
@@ -35,7 +39,10 @@ app.use(express.json());
 //   throw new Error('Unauthorized!');
 // });
 
-app.get('/posts', async (request, response) => {
+app.get(
+  '/posts',
+  passport.authenticate('jwt', { session: false }),
+  async (request, response) => {
   // let { minVotes, isPaid, hashtags } = request.query;
 
   // isPaid = isPaid === 'false' ? false : Boolean(isPaid);
@@ -62,7 +69,8 @@ app.get('/posts', async (request, response) => {
   });
 
   // response.json(posts);
-});
+}
+);
 
 app.get('/posts/:id', async (request, response) => {
   const id = request.params.id;

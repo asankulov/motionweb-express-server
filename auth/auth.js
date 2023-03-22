@@ -1,77 +1,26 @@
-const passport = require('passport');
-const LocalStrategy = require('passport-local').Strategy;
-const JWTstrategy = require('passport-jwt').Strategy;
-const ExtractJWT = require('passport-jwt').ExtractJwt;
+const jwt = require('jsonwebtoken');
 
-const { User } = require('../db');
+module.exports.isAuthenticated = (req, res, next) => {
+  const { authorization } = req.headers;
 
-// ...
+  if (!authorization) {
+    return res.sendStatus(401);
+  }
 
-passport.use(
-  'signup',
-  new LocalStrategy(
-    {
-      usernameField: 'email',
-      passwordField: 'password'
-    },
-    async (email, password, done) => {
-      try {
-        const user = await User.create({ email, password });
+  const token = authorization.replace('Bearer ', '');
 
-        return done(null, user);
-      } catch (error) {
-        done(error);
-      }
+  if (!token) {
+    return res.sendStatus(401);
+  }
+
+  jwt.verify(token, 'TOP_SECRET', (err, decoded) => {
+    if (err) {
+      return res.sendStatus(401);
     }
-  )
-);
 
-// ...
+    const { user } = decoded;
+    req.user = user;
 
-passport.use(
-  'login',
-  new LocalStrategy(
-    {
-      usernameField: 'email',
-      passwordField: 'password'
-    },
-    async (email, password, done) => {
-      try {
-        const user = await User.findOne({ email });
-
-        if (!user) {
-          return done(null, false, { message: 'User not found' });
-        }
-
-        const validate = await user.isValidPassword(password);
-
-        if (!validate) {
-          return done(null, false, { message: 'Wrong Password' });
-        }
-
-        return done(null, user, { message: 'Logged in Successfully' });
-      } catch (error) {
-        return done(error);
-      }
-    }
-  )
-);
-
-
-passport.use(
-  new JWTstrategy(
-    {
-      secretOrKey: 'TOP_SECRET',
-      jwtFromRequest: ExtractJWT.fromAuthHeaderAsBearerToken(),
-    },
-    async (payload, done) => {
-      try {
-        return done(null, payload.user);
-      } catch (error) {
-        done(error);
-      }
-    }
-  )
-);
-
-module.exports = passport;
+    next();
+  });
+}

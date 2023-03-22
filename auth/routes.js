@@ -1,21 +1,17 @@
 const express = require('express');
 const jwt = require('jsonwebtoken');
-const passport = require('passport');
+
+const { User } = require('../db');
 
 const router = express.Router();
 
 
 router.post(
   '/signup',
-  passport.authenticate(
-    'signup',
-    { session: false },
-    (req, res) => {
-      console.log('sdfsfsdfsdfsdf');
-      res.json('sfsdfsdf')
-    }
-  ),
   async (req, res) => {
+    const { email, password } = req.body;
+    await User.create({ email, password });
+
     res.json({
       message: 'Signed up successfully!',
     });
@@ -24,35 +20,24 @@ router.post(
 
 router.post(
   '/login',
-  async (req, res, next) => {
-    passport.authenticate(
-      'login',
-      async (err, user, info) => {
-        try {
-          if (err || !user) {
-            const error = new Error('An error occurred.');
+  async (req, res) => {
+    const { email, password } = req.body;
 
-            return next(error);
-          }
+    const user = await User.findOne({ email });
 
-          req.login(
-            user,
-            { session: false },
-            async (error) => {
-              if (error) return next(error);
+    if (!user || !user.isValidPassword(password)) {
+      return res
+        .status(400)
+        .json({ message: 'Email or password are incorrect' });
+    }
 
-              const body = { _id: user._id, email: user.email };
-              const token = jwt.sign({ user: body }, 'TOP_SECRET');
+    const token = jwt.sign(
+      { user: { _id: user._id, email: user.email } },
+      'TOP_SECRET',
+    );
 
-              return res.json({ token });
-            }
-          );
-        } catch (error) {
-          return next(error);
-        }
-      }
-    )(req, res, next);
-  }
+    res.json({ token });
+  },
 );
 
 module.exports = router;

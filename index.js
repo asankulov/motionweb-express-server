@@ -18,6 +18,7 @@ app.use((request, response, next) => {
 });
 
 app.use(express.json());
+app.use(express.urlencoded({ extended: false }));
 
 app.use(authRoutes);
 app.use(isAuthenticated, postRouter);

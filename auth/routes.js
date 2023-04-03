@@ -5,6 +5,12 @@ const { User } = require('../db');
 
 const router = express.Router();
 
+router.post('/image', (req, res) => {
+  res.json({
+    imageLink: 'http://localhost:3000/image.png'
+  })
+});
+
 
 router.post(
   '/signup',

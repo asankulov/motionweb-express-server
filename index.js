@@ -2,7 +2,10 @@ const express = require('express');
 const authRoutes = require('./auth/routes');
 const postRouter = require('./posts');
 
-const {isAuthenticated} = require('./auth/auth');
+const { isAuthenticated } = require('./auth/auth');
+const multer = require('multer');
+const mime = require('mime-types')
+
 
 const app = express();
 
@@ -21,7 +24,31 @@ app.use(express.json());
 app.use(express.urlencoded({ extended: false }));
 
 app.use(authRoutes);
-app.use(isAuthenticated, postRouter);
+// app.use(postRouter, isAuthenticated);
+
+const multerStorage = multer.diskStorage({
+  destination: (req, file, cb) => {
+    cb(null, './assets/images');
+  },
+  filename: (req, file, cb) => {
+    const filename = '' + process.hrtime().join('') + '.' + mime.extension(file.mimetype);
+    cb(null, filename);
+  },
+})
+
+const upload = multer({ storage: multerStorage });
+
+app.post('/file', upload.single('image'), (req, res) => {
+  console.log(req.file);
+
+  res.sendStatus(200);
+});
+
+app.post('/files', upload.array('image', 10), (req, res) => {
+  console.log(req.files);
+
+  res.sendStatus(200);
+});
 
 // app.use((request, response, next) => {
 //   const authPassword = request.headers['auth-password'];

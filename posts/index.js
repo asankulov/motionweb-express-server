@@ -85,14 +85,18 @@ router.put('/posts/:id', async (request, response) => {
 });
 
 router.patch('/posts/:id', async (request, response) => {
-  await Post.updateOne(
-    { _id: request.params.id },
-    {
-      $set: {
-        ...request.body,
+  try {
+    await Post.updateOne(
+      { _id: request.params.id },
+      {
+        $sett: {
+          ...request.body,
+        },
       },
-    },
-  )
+    );
+  } catch (error) {
+    console.log(error);
+  }
 
   response.sendStatus(200);
 });

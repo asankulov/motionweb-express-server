@@ -38,7 +38,7 @@ router.post(
     }
 
     const token = jwt.sign(
-      { user: { _id: user._id, email: user.email } },
+      { user: { _id: user._id, role: user.role } },
       'TOP_SECRET',
     );
 

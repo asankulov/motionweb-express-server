@@ -46,6 +46,11 @@ const User = new mongoose.Schema({
     type: String,
     required: true,
   },
+  role: {
+    type: String,
+    enum: ['basic', 'advanced'],
+    default: 'basic',
+  },
 });
 
 User.pre('save', async function (next) {

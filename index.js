@@ -24,7 +24,7 @@ app.use(express.json());
 app.use(express.urlencoded({ extended: false }));
 
 app.use(authRoutes);
-// app.use(postRouter, isAuthenticated);
+app.use(isAuthenticated, postRouter);
 
 const multerStorage = multer.diskStorage({
   destination: (req, file, cb) => {

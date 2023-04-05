@@ -1,6 +1,7 @@
 const express = require('express');
 
 const { Post } = require('../db');
+const { permission } = require('../auth/permission');
 
 const router = express.Router();
 router.get(
@@ -36,7 +37,7 @@ router.get(
   }
 );
 
-router.get('/posts/:id', async (request, response) => {
+router.get('/posts/:id', permission('basic'), async (request, response) => {
   const id = request.params.id;
   const post = await Post.findById(id, { __v: 0 });
 
@@ -52,7 +53,7 @@ router.get('/posts/:id', async (request, response) => {
   // response.json(post);
 });
 
-router.post('/posts', async (request, response) => {
+router.post('/posts', permission('advanced'), async (request, response) => {
   try {
     await Post.create({
       title: request.body.title,
@@ -69,7 +70,7 @@ router.post('/posts', async (request, response) => {
   }
 });
 
-router.put('/posts/:id', async (request, response) => {
+router.put('/posts/:id', permission('advanced'), async (request, response) => {
   const { id } = request.params;
 
   await Post.updateOne(
@@ -84,7 +85,7 @@ router.put('/posts/:id', async (request, response) => {
   response.sendStatus(200);
 });
 
-router.patch('/posts/:id', async (request, response) => {
+router.patch('/posts/:id', permission('advanced'), async (request, response) => {
   try {
     await Post.updateOne(
       { _id: request.params.id },
@@ -101,7 +102,7 @@ router.patch('/posts/:id', async (request, response) => {
   response.sendStatus(200);
 });
 
-router.delete('/posts/:id', async (request, response) => {
+router.delete('/posts/:id', permission('advanced'), async (request, response) => {
   const { id } = request.params;
   await Post.deleteOne({ _id: id });
 

@@ -1,6 +1,8 @@
 const mongoose = require('mongoose');
 const bcrypt = require('bcrypt');
 
+const { USER_ROLES } = require('../constants');
+
 mongoose.connect('mongodb://localhost:27017/motionweb').then(() => {
   console.log('connected');
 });
@@ -48,8 +50,8 @@ const User = new mongoose.Schema({
   },
   role: {
     type: String,
-    enum: ['basic', 'advanced'],
-    default: 'basic',
+    enum: [USER_ROLES.BASIC, USER_ROLES.ADVANCED],
+    default: USER_ROLES.BASIC,
   },
 });
 
@@ -60,9 +62,7 @@ User.pre('save', async function (next) {
 });
 
 User.methods.isValidPassword = async function (password) {
-  const result = await bcrypt.compare(password, this.password);
-
-  return result;
+  return bcrypt.compare(password, this.password);
 }
 
 module.exports = {

@@ -1,5 +1,7 @@
 const jwt = require('jsonwebtoken');
 
+const { JWT_SECRET } = require('../constants');
+
 module.exports.isAuthenticated = (req, res, next) => {
   const { authorization } = req.headers;
 
@@ -13,7 +15,7 @@ module.exports.isAuthenticated = (req, res, next) => {
     return res.sendStatus(401);
   }
 
-  jwt.verify(token, 'TOP_SECRET', (err, decoded) => {
+  jwt.verify(token, JWT_SECRET, (err, decoded) => {
     if (err) {
       return res.sendStatus(401);
     }

@@ -2,6 +2,7 @@ const express = require('express');
 const jwt = require('jsonwebtoken');
 
 const { User } = require('../db');
+const { JWT_SECRET, ERROR_MESSAGES } = require('../constants');
 
 const router = express.Router();
 
@@ -34,12 +35,12 @@ router.post(
     if (!user || !user.isValidPassword(password)) {
       return res
         .status(400)
-        .json({ message: 'Email or password are incorrect' });
+        .json({ message: ERROR_MESSAGES.INVALID_CREDENTIALS });
     }
 
     const token = jwt.sign(
       { user: { _id: user._id, role: user.role } },
-      'TOP_SECRET',
+      JWT_SECRET,
     );
 
     res.json({ token });

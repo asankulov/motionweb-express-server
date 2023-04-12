@@ -3,42 +3,50 @@ const express = require('express');
 const { Post } = require('../db');
 const { permission } = require('../auth/permission');
 const { USER_ROLES } = require('../constants');
+const { validate } = require('../middlewares');
+const { postCreateSchema, postsQuerySchema } = require('../schemas');
 
 const router = express.Router();
 router.get(
   '/posts',
+  validate(postsQuerySchema, 'query'),
   async (request, response) => {
-    // let { minVotes, isPaid, hashtags } = request.query;
+    let { minVotes, isPaid, hashtags } = request.query;
 
-    // isPaid = isPaid === 'false' ? false : Boolean(isPaid);
-    console.log(request.user);
+    let query = {};
+
+    if (typeof minVotes !== 'undefined') {
+      Object.assign(query, { votes: { $gte: minVotes } });
+    }
+
+    if (typeof isPaid !== 'undefined') {
+      Object.assign(query, { isPaid });
+    }
+
+    if (typeof hashtags !== 'undefined') {
+      Object.assign(query, { hashtags: { $all: hashtags } });
+    }
 
     const posts = await Post
       .find(
-        {
-          /*$and: [
-            // { votes: { $gte: Number(minVotes) } },
-            { isPaid },
-            { hashtags: { $all: hashtags } },
-          ],*/
-        },
+        query,
         { __v: 0 },
       )
       .limit(50)
       .skip(0)
       .sort({ votes: -1, createdAt: -1 });
-    // 1, 2, 3, 4, 5 = 1 A-Z a-z
-    // 5, 4, 3, 2, 1 = -1 Z-A z-a
-    response.render('index', {
-      title: 'Posts page',
-      posts: posts.map((post) => ({ ...post.toJSON(), link: '/posts/' + post._id })),
-    });
 
-    // response.json(posts);
+
+    // response.render('index', {
+    //   title: 'Posts page',
+    //   posts: posts.map((post) => ({ ...post.toJSON(), link: '/posts/' + post._id })),
+    // });
+
+    response.json(posts);
   }
 );
 
-router.get('/posts/:id', permission(USER_ROLES.BASIC), async (request, response) => {
+router.get('/posts/:id', async (request, response) => {
   const id = request.params.id;
   const post = await Post.findById(id, { __v: 0 });
 
@@ -54,12 +62,16 @@ router.get('/posts/:id', permission(USER_ROLES.BASIC), async (request, response)
   // response.json(post);
 });
 
-router.post('/posts', permission(USER_ROLES.ADVANCED), async (request, response) => {
+router.post(
+  '/posts',
+  permission(USER_ROLES.ADVANCED),
+  validate(postCreateSchema),
+  async (request, response) => {
   try {
     await Post.create({
       title: request.body.title,
       text: request.body.text,
-      isPaid: Boolean(request.body.isPaid),
+      isPaid: request.body.isPaid,
       hashtags: request.body.hashtags,
     });
 
@@ -69,7 +81,8 @@ router.post('/posts', permission(USER_ROLES.ADVANCED), async (request, response)
       message: 'Fields are invalid!',
     });
   }
-});
+}
+);
 
 router.put('/posts/:id', permission(USER_ROLES.ADVANCED), async (request, response) => {
   const { id } = request.params;

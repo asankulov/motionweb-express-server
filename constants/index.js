@@ -1,6 +1,6 @@
 const USER_ROLES = {
-  BASIC: 0,
-  ADVANCED: 1,
+  BASIC: 'basic',
+  ADVANCED: 'advanced',
 };
 
 const JWT_SECRET = 'TOP_SECRET';

@@ -28,7 +28,11 @@ const Post = new mongoose.Schema({
   },
   hashtags: {
     type: [String],
-  }
+  },
+  author: {
+    type: mongoose.Schema.Types.ObjectId,
+    ref: 'User',
+  },
 }, { timestamps: true, strict: false });
 
 const User = new mongoose.Schema({
@@ -53,6 +57,10 @@ const User = new mongoose.Schema({
     enum: [USER_ROLES.BASIC, USER_ROLES.ADVANCED],
     default: USER_ROLES.BASIC,
   },
+  posts: [{
+    type: mongoose.Schema.Types.ObjectId,
+    ref: 'Post',
+  }],
 });
 
 User.pre('save', async function (next) {
@@ -66,6 +74,6 @@ User.methods.isValidPassword = async function (password) {
 }
 
 module.exports = {
-  Post: mongoose.model('posts', Post),
-  User: mongoose.model('users', User),
+  Post: mongoose.model('Post', Post, 'posts'),
+  User: mongoose.model('User', User, 'users'),
 };

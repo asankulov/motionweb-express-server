@@ -3,13 +3,35 @@ const jwt = require('jsonwebtoken');
 
 const { User } = require('../db');
 const { JWT_SECRET, ERROR_MESSAGES } = require('../constants');
+const multer = require('multer');
+const mime = require('mime-types');
 
 const router = express.Router();
 
-router.post('/image', (req, res) => {
-  res.json({
-    imageLink: 'http://localhost:3000/image.png'
-  })
+
+const multerStorage = multer.diskStorage({
+  destination: (req, file, cb) => {
+    cb(null, './assets/images');
+  },
+  filename: (req, file, cb) => {
+    const filename = '' + process.hrtime().join('') + '.' + mime.extension(file.mimetype);
+    cb(null, filename);
+  },
+})
+
+const upload = multer({ storage: multerStorage });
+router.post('/file', upload.single('image'), (req, res) => {
+  console.log(req.file);
+
+  res.status(200).json({
+    filePath: '/' + req.file.path,
+  });
+});
+
+router.post('/files', upload.array('image', 10), (req, res) => {
+  console.log(req.files);
+
+  res.sendStatus(200);
 });
 
 

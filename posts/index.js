@@ -48,18 +48,20 @@ router.get(
 
 router.get('/posts/:id', async (request, response) => {
   const id = request.params.id;
-  const post = await Post.findById(id, { __v: 0 });
+  const post = await Post
+    .findById(id, { __v: 0 })
+    .populate('author', { email: 1, _id: 0 });
 
-  response.render(
-    'post',
-    {
-      title: post.title,
-      text: post.text,
-      hashtags: post.hashtags,
-    },
-  );
+  // response.render(
+  //   'post',
+  //   {
+  //     title: post.title,
+  //     text: post.text,
+  //     hashtags: post.hashtags,
+  //   },
+  // );
 
-  // response.json(post);
+  response.json(post);
 });
 
 router.post(
@@ -68,11 +70,15 @@ router.post(
   validate(postCreateSchema),
   async (request, response) => {
   try {
+    const { user } = request;
+    console.log(user);
+
     await Post.create({
       title: request.body.title,
       text: request.body.text,
       isPaid: request.body.isPaid,
       hashtags: request.body.hashtags,
+      author: user._id,
     });
 
     response.sendStatus(200);

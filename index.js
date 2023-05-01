@@ -1,8 +1,8 @@
 const express = require('express');
-// const authRoutes = require('./auth/routes');
-// const postRouter = require('./posts');
+const authRoutes = require('./auth/routes');
+const postRouter = require('./posts');
 
-// const { isAuthenticated } = require('./auth/auth');
+const { isAuthenticated } = require('./auth/auth');
 
 
 const app = express();
@@ -23,8 +23,8 @@ app.use((request, response, next) => {
 app.use(express.json());
 app.use(express.urlencoded({ extended: false }));
 
-// app.use(authRoutes);
-// app.use(isAuthenticated, postRouter);
+app.use(authRoutes);
+app.use(isAuthenticated, postRouter);
 
 app.get('/', (request, response) => {
   response.render(

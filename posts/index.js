@@ -7,6 +7,70 @@ const { validate } = require('../middlewares');
 const { postCreateSchema, postsQuerySchema } = require('../schemas');
 
 const router = express.Router();
+
+/**
+ * @swagger
+ * components:
+ *   securitySchemas:
+ *     bearerAuth:
+ *       type: http
+ *       scheme: bearer
+ *       bearerFormat: JWT
+ *   schemas:
+ *     Post:
+ *       type: object
+ *       required:
+ *         - title
+ *         - text
+ *       properties:
+ *         _id:
+ *           type: string
+ *           description: The auto-generated id(mongodb ObjectId) of the post
+ *         title:
+ *           type: string
+ *           description: The title of your post
+ *         text:
+ *           type: string
+ *           description: The content of your post
+ *         author:
+ *           type: object
+ *           description: The post author
+ *           properties:
+ *             email:
+ *               type: string
+ *               format: email
+ *         votes:
+ *           type: integer
+ *           description: The votes number of your post
+ *         isPaid:
+ *           type: boolean
+ *           description: The flag which describes whether the post is commercial or not
+ *         hashtags:
+ *           type: array
+ *           description: The array of hashtags
+ *           items:
+ *             type: string
+ *         createdAt:
+ *             type: string
+ *             format: date
+ *             description: The date the post was added
+ *         updatedAt:
+ *             type: string
+ *             format: date
+ *             description: The date the post was updated
+ *       example:
+ *         id: 643f8cdebb1bda8d845447f7
+ *         title: The New Turing Omnibus
+ *         text: Lorem Ipsum
+ *         author: {
+ *           email: motionweb@motionweb.online
+ *         }
+ *         isPaid: false
+ *         votes: 10
+ *         hashtags: [lorem, ipsum]
+ *         createdAt: 2020-03-10T04:05:06.157Z
+ *         updatedAt: 2020-03-10T04:05:06.157Z
+ */
 router.get(
   '/posts',
   validate(postsQuerySchema, 'query'),
@@ -46,6 +110,35 @@ router.get(
   }
 );
 
+/**
+ * @swagger
+ * tags:
+ *   name: Post
+ *   description: The posts managing API
+ * /posts/{id}:
+ *   get:
+ *     security:
+ *       - bearerAuth: []
+ *     summary: Get a post by id
+ *     tags: [Post]
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         schema:
+ *           type: string
+ *         required: true
+ *         description: The post id
+ *     responses:
+ *       200:
+ *         description: The found post.
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/Post'
+ *       500:
+ *         description: Some server error
+ *
+ */
 router.get('/posts/:id', async (request, response) => {
   const id = request.params.id;
   const post = await Post
@@ -64,6 +157,44 @@ router.get('/posts/:id', async (request, response) => {
   response.json(post);
 });
 
+/**
+ * @swagger
+ * /posts:
+ *   post:
+ *     summary: Create a new post
+ *     tags: [Post]
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             required:
+ *               - title
+ *               - text
+ *             properties:
+ *               title:
+ *                 type: string
+ *                 required: true
+ *                 description: The title of your post
+ *               text:
+ *                 type: string
+ *                 required: true
+ *                 description: The content of your post
+ *               isPaid:
+ *                 type: boolean
+ *                 description: The flag which describes whether the post is commercial or not
+ *               hashtags:
+ *                 type: array
+ *                 description: The array of hashtags
+ *                 items:
+ *                   type: string
+ *     responses:
+ *       200:
+ *         description: OK
+ *       500:
+ *         description: Some server error
+ */
 router.post(
   '/posts',
   permission(USER_ROLES.ADVANCED),
